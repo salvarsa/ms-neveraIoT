@@ -2,11 +2,11 @@ const express = require('express')
 const { connect } = require('mongoose');
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/user.js');
-const dotenv = require('dotenv')
+const productRouter = require('./routes/product.js');
+const dotenv = require('dotenv');
 dotenv.config()
 
-const db = process.env.MONGODB || 'mongodb://root:12345abc@localhost:27017/futurapps?authSource=admin&directConnection=true'
-
+const db = process.env.MONGODB
 const connectDb = async () => {
     try {
         await connect(db, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -33,7 +33,8 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/index.html')
 })
 
-app.use('/api/v1/user', userRouter)
+app.use('/api/v1/user', userRouter);
+app.use('/api/v1/product', productRouter);
 
 const PORT = process.env.PORT || 1716
 
