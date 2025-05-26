@@ -6,13 +6,13 @@ const productRouter = require('./routes/product.js');
 const dotenv = require('dotenv');
 const path = require('path')
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 const db = process.env.MONGODB
 
 const connectDb = async () => {
     try {
-        await connect(db, { useNewUrlParser: true, useUnifiedTopology: true });
+        await connect(db);
         console.log('DB CONNECTED..');
     } catch (error) {
         console.error('DB CONNECTION ERROR:', error);
