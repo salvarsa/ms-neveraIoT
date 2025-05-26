@@ -80,16 +80,24 @@ const adjustQuantity = (productId, change) => {
 
 // Función para procesar el pago
 const processPayment = async () => {
-    if (!currentUserId || cart.length === 0) return;
+    if (!currentUserId || cart.length === 0) {
+        alert('Debe tener un usuario válido y productos en el carrito');
+        return;
+    }
     
     try {
         // Obtener datos del usuario
         const userResponse = await fetch(`/api/v1/user/id/${currentUserId}`);
         const user = await userResponse.json();
         
+        if (!user || user.length === 0) {
+            alert('Error: Usuario no encontrado');
+            return;
+        }
+        
         // Mostrar modal
         const modal = document.getElementById('checkoutModal');
-        modal.style.display = 'block'; // Cambiar a 'flex' para mejor compatibilidad
+        modal.style.display = 'flex'; // Cambiar a flex para centrarlo
         
         // Llenar información del usuario
         document.getElementById('modalUserInfo').innerHTML = `
@@ -114,12 +122,15 @@ const processPayment = async () => {
     }
 };
 
-// Agregar este código JUSTO DESPUÉS de la definición de processPayment
+// Configuración del modal
 const setupModal = () => {
     // Cerrar modal con botón X
-    document.querySelector('.close').addEventListener('click', () => {
-        document.getElementById('checkoutModal').style.display = 'none';
-    });
+    const closeBtn = document.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('checkoutModal').style.display = 'none';
+        });
+    }
 
     // Cerrar modal haciendo click fuera
     window.addEventListener('click', (event) => {
@@ -130,44 +141,50 @@ const setupModal = () => {
     });
 
     // Confirmar compra
-    document.getElementById('confirmCheckout').addEventListener('click', async () => {
-        try {
-            const response = await fetch('/api/v1/sales/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: currentUserId,
-                    products: cart,
-                    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-                    date: new Date().toISOString()
-                })
-            });
-            
-            if (response.ok) {
-                document.getElementById('checkoutModal').style.display = 'none';
-                clearAll();
-                alert('¡Compra finalizada con éxito!');
+    const confirmBtn = document.getElementById('confirmCheckout');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/v1/sales/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUserId,
+                        products: cart.map(item => ({
+                            productId: item.id,
+                            quantity: item.quantity,
+                            price: item.price
+                        })),
+                        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('checkoutModal').style.display = 'none';
+                    clearAll();
+                } else {
+                    alert('Error al procesar la compra');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al procesar la compra');
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error al procesar la compra');
-        }
-    });
+        });
+    }
 };
+
 // Función para limpiar todo
 const clearAll = () => {
     cart = [];
     currentUserId = null;
     document.getElementById('resultado').innerHTML = '';
     document.getElementById('cedula').value = '';
-    document.getElementById('btnLimpiar').style.display = 'none';
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    if (btnLimpiar) {
+        btnLimpiar.style.display = 'none';
+    }
     updateCartDisplay();
 };
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', renderProducts);
-document.getElementById('checkoutBtn').addEventListener('click', processPayment);
-document.getElementById('btnLimpiar').addEventListener('click', clearAll);
 
 const checkForUpdates = async () => {
     try {
@@ -175,18 +192,10 @@ const checkForUpdates = async () => {
         const data = await response.json();
         
         // Verificar si el ID es nuevo y válido
-        if (data.userId && data.userId !== currentUserId) {
+        if (data.userId && data.userId !== currentUserId && data.isActive) {
             currentUserId = data.userId;
             await performSearch(data.userId);
-            
-            // Resetear después de 2 segundos
-            setTimeout(() => {
-                currentUserId = null;
-                document.getElementById('resultado').innerHTML = '';
-                document.getElementById('cedula').value = '';
-            }, 2000);
         }
-
         
     } catch(error) {
         console.error('Error checking updates:', error);
@@ -204,6 +213,7 @@ const performSearch = async (userId) => {
             resultadoDiv.innerHTML = 'Usuario no encontrado';
             resultadoDiv.style.backgroundColor = '#ffebee';
             resultadoDiv.style.color = '#b71c1c';
+            currentUserId = null;
             return;
         }
         
@@ -214,45 +224,65 @@ const performSearch = async (userId) => {
         resultadoDiv.style.backgroundColor = '#e8f5e9';
         resultadoDiv.style.color = '#2e7d32';
 
-        // Mostrar botón al tener resultados
-        resultadoDiv.innerHTML = `
-        ${user[0].firstName} ${user[0].lastName}<br>
-        Su documento es: ${user[0].id}
-        `;
+        // Mostrar botón de limpiar
+        const btnLimpiar = document.getElementById('btnLimpiar');
+        if (btnLimpiar) {
+            btnLimpiar.style.display = 'block';
+        }
 
-        document.getElementById('btnLimpiar').style.display = 'block';
-
-        // Manejar evento del botón
-        document.getElementById('btnLimpiar').addEventListener('click', async () => {
-            try {
-                await fetch('/api/v1/user/clear-access', { method: 'POST' });
-                document.getElementById('resultado').innerHTML = '';
-                document.getElementById('resultado').style.backgroundColor = '';
-                document.getElementById('resultado').style.color = '';
-                document.getElementById('btnLimpiar').style.display = 'none';
-                document.getElementById('cedula').value = '';
-            } catch (error) {
-                console.error('Error al limpiar:', error);
-            }
-});
+        // Actualizar display del carrito para habilitar checkout si hay productos
+        updateCartDisplay();
         
     } catch (error) {
+        console.error('Error en búsqueda:', error);
         resultadoDiv.innerHTML = 'Error en la consulta';
         resultadoDiv.style.backgroundColor = '#ffebee';
         resultadoDiv.style.color = '#b71c1c';
+        currentUserId = null;
     }
 };
 
+// Event listeners principales
 document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
-    setupModal(); // Inicializar eventos del modal
+    setupModal();
+    
+    // Event listener para el formulario de consulta
+    const consultaForm = document.getElementById('consultaForm');
+    if (consultaForm) {
+        consultaForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cedula = document.getElementById('cedula').value;
+            if (cedula.trim()) {
+                currentUserId = cedula.trim();
+                await performSearch(cedula.trim());
+            }
+        });
+    }
+    
+    // Event listener para el botón de checkout
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', processPayment);
+    }
+    
+    // Event listener para el botón de limpiar
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    if (btnLimpiar) {
+        btnLimpiar.addEventListener('click', async () => {
+            try {
+                await fetch('/api/v1/user/clear-access', { method: 'POST' });
+                clearAll();
+                // Limpiar estilos del resultado
+                const resultadoDiv = document.getElementById('resultado');
+                resultadoDiv.style.backgroundColor = '';
+                resultadoDiv.style.color = '';
+            } catch (error) {
+                console.error('Error al limpiar:', error);
+            }
+        });
+    }
 });
 
 // Configurar polling cada segundo
 setInterval(checkForUpdates, 1000);
-
-document.getElementById('consultaForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const cedula = document.getElementById('cedula').value;
-    await performSearch(cedula);
-});

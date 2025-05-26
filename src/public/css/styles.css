@@ -119,6 +119,11 @@ button:hover {
     background-color: #45a049;
 }
 
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
 #resultado {
     margin-top: 1rem;
     padding: 1rem;
@@ -135,6 +140,7 @@ button:hover {
     background-color: #d32f2f !important;
 }
 
+/* Modal Styles - CORREGIDO */
 .modal {
     display: none;
     position: fixed;
@@ -143,23 +149,24 @@ button:hover {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
-    z-index: 9999; /* Aumentar z-index */
+    z-index: 10000;
     justify-content: center;
-    align-items: flex-start;
-    padding-top: 50px;
-    overflow: auto;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
-
 
 .modal-content {
     position: relative;
     background-color: #fefefe;
-    margin: 5% auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 90%;
+    width: 100%;
     max-width: 600px;
+    max-height: 90vh;
     border-radius: 10px;
+    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .modal-section {
@@ -167,6 +174,12 @@ button:hover {
     padding: 15px;
     border: 1px solid #eee;
     border-radius: 4px;
+    background-color: #f9f9f9;
+}
+
+.modal-section h3 {
+    margin-top: 0;
+    color: #333;
 }
 
 .total-modal {
@@ -174,16 +187,37 @@ button:hover {
     font-weight: bold;
     text-align: right;
     margin-top: 20px;
+    color: #2e7d32;
 }
 
 .close {
     position: absolute;
     right: 20px;
-    top: 10px;
+    top: 15px;
     font-size: 28px;
     cursor: pointer;
+    color: #aaa;
+    line-height: 1;
 }
 
-.close:hover {
+.close:hover,
+.close:focus {
     color: #666;
+    text-decoration: none;
+}
+
+#confirmCheckout {
+    background-color: #2e7d32;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+#confirmCheckout:hover {
+    background-color: #1b5e20;
 }
