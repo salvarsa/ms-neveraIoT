@@ -1,4 +1,127 @@
 let currentUserId = null;
+let cart = [];
+
+// Función para renderizar productos
+const renderProducts = async () => {
+    const container = document.getElementById('productsContainer');
+    try {
+        const response = await fetch('/api/v1/product');
+        const products = await response.json();
+        
+        container.innerHTML = products
+            .filter(product => product.isAvailable)
+            .map(product => `
+                <div class="product-card">
+                    <img src="${product.img}" alt="${product.name}">
+                    <h3>${product.name}</h3>
+                    <p>Precio: $${product.price}</p>
+                    <button onclick="addToCart('${product._id}', '${product.name}', ${product.price})">
+                        Agregar al Carrito
+                    </button>
+                </div>
+            `).join('');
+    } catch (error) {
+        console.error('Error loading products:', error);
+    }
+};
+
+// Funcionalidad del Carrito
+const addToCart = (productId, productName, price) => {
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({
+            id: productId,
+            name: productName,
+            price: price,
+            quantity: 1
+        });
+    }
+    
+    updateCartDisplay();
+};
+
+const updateCartDisplay = () => {
+    const cartItems = document.getElementById('cartItems');
+    const totalAmount = document.getElementById('totalAmount');
+    let total = 0;
+    
+    cartItems.innerHTML = cart.map(item => `
+        <div class="cart-item">
+            <span>${item.name}</span>
+            <div>
+                <button onclick="adjustQuantity('${item.id}', -1)">-</button>
+                <span>${item.quantity}</span>
+                <button onclick="adjustQuantity('${item.id}', 1)">+</button>
+                <span>$${item.price * item.quantity}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    totalAmount.textContent = total;
+    
+    // Habilitar botón de pago solo si hay usuario válido y productos
+    document.getElementById('checkoutBtn').disabled = !currentUserId || cart.length === 0;
+};
+
+const adjustQuantity = (productId, change) => {
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+            cart = cart.filter(i => i.id !== productId);
+        }
+        updateCartDisplay();
+    }
+};
+
+// Función para procesar el pago
+const processPayment = async () => {
+    if (!currentUserId || cart.length === 0) return;
+    
+    try {
+        const invoiceData = {
+            userId: currentUserId,
+            products: cart,
+            total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+            date: new Date().toISOString()
+        };
+        
+        // Aquí deberías implementar la llamada a tu endpoint de facturación
+        const response = await fetch('/api/v1/sales/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(invoiceData)
+        });
+        
+        if (response.ok) {
+            alert('Compra realizada exitosamente!');
+            clearAll();
+        }
+    } catch (error) {
+        console.error('Error processing payment:', error);
+    }
+};
+
+// Función para limpiar todo
+const clearAll = () => {
+    cart = [];
+    currentUserId = null;
+    document.getElementById('resultado').innerHTML = '';
+    document.getElementById('cedula').value = '';
+    document.getElementById('btnLimpiar').style.display = 'none';
+    updateCartDisplay();
+};
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', renderProducts);
+document.getElementById('checkoutBtn').addEventListener('click', processPayment);
+document.getElementById('btnLimpiar').addEventListener('click', clearAll);
 
 const checkForUpdates = async () => {
     try {

@@ -3,6 +3,7 @@ const { connect } = require('mongoose');
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/user.js');
 const productRouter = require('./routes/product.js');
+const saleRouter = require('./routes/sale');
 const dotenv = require('dotenv');
 const path = require('path')
 
@@ -38,6 +39,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/product', productRouter);
+app.use('/api/v1/sales', saleRouter);
 
 const PORT = process.env.PORT || 1716
 
