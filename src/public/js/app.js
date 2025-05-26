@@ -83,78 +83,79 @@ const processPayment = async () => {
     if (!currentUserId || cart.length === 0) return;
     
     try {
-        // Obtener datos del usuario
         const userResponse = await fetch(`/api/v1/user/id/${currentUserId}`);
+        if (!userResponse.ok) throw new Error('Error obteniendo usuario');
         const user = await userResponse.json();
         
-        // Mostrar modal
         const modal = document.getElementById('checkoutModal');
         modal.style.display = 'block';
         
-        // Llenar información del usuario
+        // Limpiar eventos duplicados
+        document.getElementById('btnLimpiar').replaceWith(document.getElementById('btnLimpiar').cloneNode(true));
+        
+        // Llenar datos del usuario
         document.getElementById('modalUserInfo').innerHTML = `
-            <p>Nombre: ${user[0].firstName} ${user[0].lastName}</p>
-            <p>Documento: ${user[0].id}</p>
+            <p><strong>Nombre:</strong> ${user[0].firstName} ${user[0].lastName}</p>
+            <p><strong>Documento:</strong> ${user[0].id}</p>
         `;
         
-        // Llenar información del carrito
-        const cartItemsHTML = cart.map(item => `
+        // Llenar carrito
+        document.getElementById('modalCartItems').innerHTML = cart.map(item => `
             <div class="cart-item">
-                <span>${item.name}</span>
-                <div>
-                    <span>Cantidad: ${item.quantity}</span>
-                    <span>Total: $${item.price * item.quantity}</span>
-                </div>
+                <p><strong>${item.name}</strong></p>
+                <p>Cantidad: ${item.quantity} | Total: $${(item.price * item.quantity).toFixed(2)}</p>
             </div>
         `).join('');
         
-        document.getElementById('modalCartItems').innerHTML = cartItemsHTML;
-        document.getElementById('modalTotal').textContent = cart
-            .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('modalTotal').textContent = 
+            cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2);
             
     } catch (error) {
-        console.error('Error al mostrar resumen:', error);
+        console.error('Error:', error);
+        alert('Error al mostrar el resumen de compra');
     }
 };
 
-// Agregar evento para confirmar la compra
-document.getElementById('confirmCheckout').addEventListener('click', async () => {
-    try {
-        const invoiceData = {
-            userId: currentUserId,
-            products: cart,
-            total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            date: new Date().toISOString()
-        };
-        
-        const response = await fetch('/api/v1/sales/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(invoiceData)
-        });
-        
-        if (response.ok) {
-            // Cerrar modal y limpiar
-            document.getElementById('checkoutModal').style.display = 'none';
-            clearAll();
-            alert('Compra realizada exitosamente!');
+// Agregar este código al final para inicializar eventos del modal
+document.addEventListener('DOMContentLoaded', () => {
+    // Cerrar modal con botón X
+    document.querySelector('.close').addEventListener('click', () => {
+        document.getElementById('checkoutModal').style.display = 'none';
+    });
+
+    // Cerrar modal haciendo click fuera
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('checkoutModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
         }
-    } catch (error) {
-        console.error('Error finalizando compra:', error);
-    }
-});
+    });
 
-// Agregar funcionalidad para cerrar el modal
-document.querySelector('.close').addEventListener('click', () => {
-    document.getElementById('checkoutModal').style.display = 'none';
+    // Confirmar compra
+    document.getElementById('confirmCheckout').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/api/v1/sales/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUserId,
+                    products: cart,
+                    total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+                    date: new Date().toISOString()
+                })
+            });
+            
+            if (response.ok) {
+                document.getElementById('checkoutModal').style.display = 'none';
+                clearAll();
+                alert('¡Compra finalizada con éxito!');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al procesar la compra');
+        }
+    });
 });
-
-window.onclick = (event) => {
-    const modal = document.getElementById('checkoutModal');
-    if (event.target === modal) {
-        modal.style.display = 'none';
-    }
-};
 
 // Función para limpiar todo
 const clearAll = () => {

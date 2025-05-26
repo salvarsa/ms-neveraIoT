@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -35,28 +36,30 @@
                     <button id="btnLimpiar" class="btn-limpiar">Limpiar Todo</button>
                 </div>
             </div>
-            
-            <div id="checkoutModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Resumen de Compra</h2>
-                    
-                    <div class="modal-section">
-                        <h3>Información del Usuario</h3>
-                        <div id="modalUserInfo"></div>
-                    </div>
-                    
-                    <div class="modal-section">
-                        <h3>Detalles de la Compra</h3>
-                        <div id="modalCartItems"></div>
-                        <p class="total-modal">Total: $<span id="modalTotal">0</span></p>
-                    </div>
-                    
-                    <button id="confirmCheckout">Finalizar Compra</button>
-                </div>
-            </div>
         </div>
     </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Resumen de Compra</h2>
+            
+            <div class="modal-section">
+                <h3>Información del Usuario</h3>
+                <div id="modalUserInfo"></div>
+            </div>
+            
+            <div class="modal-section">
+                <h3>Detalles de la Compra</h3>
+                <div id="modalCartItems"></div>
+                <p class="total-modal">Total: $<span id="modalTotal">0</span></p>
+            </div>
+            
+            <button id="confirmCheckout">Finalizar Compra</button>
+        </div>
+    </div>
+
     <script src="/js/app.js"></script>
 </body>
 </html>
