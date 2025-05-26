@@ -4,9 +4,12 @@ const bodyParser = require('body-parser');
 const userRouter = require('./routes/user.js');
 const productRouter = require('./routes/product.js');
 const dotenv = require('dotenv');
-dotenv.config()
+const path = require('path')
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const db = process.env.MONGODB
+
 const connectDb = async () => {
     try {
         await connect(db, { useNewUrlParser: true, useUnifiedTopology: true });

@@ -6,7 +6,7 @@ const schema = Schema({
   name: { type: String },
   img: { type: String},
   price: { type: String },
-  quantity: { type: number},
+  quantity: { type: Number},
   isAvailable: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
