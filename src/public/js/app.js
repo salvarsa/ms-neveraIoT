@@ -83,6 +83,43 @@ const processPayment = async () => {
     if (!currentUserId || cart.length === 0) return;
     
     try {
+        // Obtener datos del usuario
+        const userResponse = await fetch(`/api/v1/user/id/${currentUserId}`);
+        const user = await userResponse.json();
+        
+        // Mostrar modal
+        const modal = document.getElementById('checkoutModal');
+        modal.style.display = 'block';
+        
+        // Llenar información del usuario
+        document.getElementById('modalUserInfo').innerHTML = `
+            <p>Nombre: ${user[0].firstName} ${user[0].lastName}</p>
+            <p>Documento: ${user[0].id}</p>
+        `;
+        
+        // Llenar información del carrito
+        const cartItemsHTML = cart.map(item => `
+            <div class="cart-item">
+                <span>${item.name}</span>
+                <div>
+                    <span>Cantidad: ${item.quantity}</span>
+                    <span>Total: $${item.price * item.quantity}</span>
+                </div>
+            </div>
+        `).join('');
+        
+        document.getElementById('modalCartItems').innerHTML = cartItemsHTML;
+        document.getElementById('modalTotal').textContent = cart
+            .reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+    } catch (error) {
+        console.error('Error al mostrar resumen:', error);
+    }
+};
+
+// Agregar evento para confirmar la compra
+document.getElementById('confirmCheckout').addEventListener('click', async () => {
+    try {
         const invoiceData = {
             userId: currentUserId,
             products: cart,
@@ -90,21 +127,32 @@ const processPayment = async () => {
             date: new Date().toISOString()
         };
         
-        // Aquí deberías implementar la llamada a tu endpoint de facturación
         const response = await fetch('/api/v1/sales/create', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(invoiceData)
         });
         
         if (response.ok) {
-            alert('Compra realizada exitosamente!');
+            // Cerrar modal y limpiar
+            document.getElementById('checkoutModal').style.display = 'none';
             clearAll();
+            alert('Compra realizada exitosamente!');
         }
     } catch (error) {
-        console.error('Error processing payment:', error);
+        console.error('Error finalizando compra:', error);
+    }
+});
+
+// Agregar funcionalidad para cerrar el modal
+document.querySelector('.close').addEventListener('click', () => {
+    document.getElementById('checkoutModal').style.display = 'none';
+});
+
+window.onclick = (event) => {
+    const modal = document.getElementById('checkoutModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
     }
 };
 
