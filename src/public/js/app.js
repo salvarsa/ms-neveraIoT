@@ -83,23 +83,21 @@ const processPayment = async () => {
     if (!currentUserId || cart.length === 0) return;
     
     try {
+        // Obtener datos del usuario
         const userResponse = await fetch(`/api/v1/user/id/${currentUserId}`);
-        if (!userResponse.ok) throw new Error('Error obteniendo usuario');
         const user = await userResponse.json();
         
+        // Mostrar modal
         const modal = document.getElementById('checkoutModal');
-        modal.style.display = 'block';
+        modal.style.display = 'block'; // Cambiar a 'flex' para mejor compatibilidad
         
-        // Limpiar eventos duplicados
-        document.getElementById('btnLimpiar').replaceWith(document.getElementById('btnLimpiar').cloneNode(true));
-        
-        // Llenar datos del usuario
+        // Llenar información del usuario
         document.getElementById('modalUserInfo').innerHTML = `
             <p><strong>Nombre:</strong> ${user[0].firstName} ${user[0].lastName}</p>
             <p><strong>Documento:</strong> ${user[0].id}</p>
         `;
         
-        // Llenar carrito
+        // Llenar información del carrito
         document.getElementById('modalCartItems').innerHTML = cart.map(item => `
             <div class="cart-item">
                 <p><strong>${item.name}</strong></p>
@@ -116,8 +114,8 @@ const processPayment = async () => {
     }
 };
 
-// Agregar este código al final para inicializar eventos del modal
-document.addEventListener('DOMContentLoaded', () => {
+// Agregar este código JUSTO DESPUÉS de la definición de processPayment
+const setupModal = () => {
     // Cerrar modal con botón X
     document.querySelector('.close').addEventListener('click', () => {
         document.getElementById('checkoutModal').style.display = 'none';
@@ -155,8 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Error al procesar la compra');
         }
     });
-});
-
+};
 // Función para limpiar todo
 const clearAll = () => {
     cart = [];
@@ -245,6 +242,11 @@ const performSearch = async (userId) => {
         resultadoDiv.style.color = '#b71c1c';
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderProducts();
+    setupModal(); // Inicializar eventos del modal
+});
 
 // Configurar polling cada segundo
 setInterval(checkForUpdates, 1000);
