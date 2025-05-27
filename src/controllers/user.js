@@ -25,7 +25,8 @@ const updateLastAccess = async (req, res) => {
         req.app.locals.lastAccessData = {
             userId: req.body.userId,
             timestamp: Date.now(),
-            isActive: true 
+            isActive: true ,
+            purchaseCompleted: false 
         };
         res.status(200).json({ message: "UPDATE_SUCCESS" });
     } catch (error) {
@@ -35,8 +36,23 @@ const updateLastAccess = async (req, res) => {
 
 const clearAccess = async (req, res) => {
     try {
-        req.app.locals.lastAccessData.isActive = false;
+        if (req.app.locals.lastAccessData) {
+            req.app.locals.lastAccessData.isActive = false;
+            req.app.locals.lastAccessData.purchaseCompleted = false;
+        }
         res.status(200).json({ message: "ACCESS_CLEARED" });
+    } catch (error) {
+        res.status(500).json({ message: "SERVER_ERROR" });
+    }
+};
+
+const completePurchase = async (req, res) => {
+    try {
+        if (req.app.locals.lastAccessData) {
+            req.app.locals.lastAccessData.purchaseCompleted = true;
+            req.app.locals.lastAccessData.timestamp = Date.now(); // Actualizar timestamp
+        }
+        res.status(200).json({ message: "PURCHASE_COMPLETED" });
     } catch (error) {
         res.status(500).json({ message: "SERVER_ERROR" });
     }
@@ -108,4 +124,5 @@ module.exports = {
     deleteUser,
     clearAccess,
     updateLastAccess,
+    completePurchase
 }
